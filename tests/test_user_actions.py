@@ -56,7 +56,7 @@ class TestUserActions(unittest.TestCase):
     def test_delete_account(self):
         """Prueba la eliminación de una cuenta y todas las contraseñas asociadas."""
         message = user_actions.delete_account(self.user.id, self.user_password)
-        self.assertEqual(message, "Account and all associated passwords deleted successfully.")
+        self.assertEqual(message, "Account and all associated passwords and categories deleted successfully.")
         user = self.session.query(User).filter_by(id=self.user.id).first()
         self.assertIsNone(user)
 
