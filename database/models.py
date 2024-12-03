@@ -18,11 +18,15 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     email_verified = Column(Boolean, default=False)
+    categories = relationship("Category", back_populates="user")
+    passwords = relationship("Password", back_populates="user")
 
 class Category(Base):
     __tablename__ = 'categories'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user = relationship("User", back_populates="categories")
     passwords = relationship("Password", back_populates="category")
 
 class Password(Base):
@@ -36,8 +40,6 @@ class Password(Base):
     category_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
     user = relationship("User", back_populates="passwords")
     category = relationship("Category", back_populates="passwords")
-
-User.passwords = relationship("Password", order_by=Password.id, back_populates="user")
 
 # Crear las tablas en la base de datos
 Base.metadata.create_all(engine)

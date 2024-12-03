@@ -5,8 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from session_manager import generate_token
 from cryptography.fernet import Fernet, InvalidToken
 from dotenv import load_dotenv
-from services.email_verification import verify_email
 from utils.password_utils import is_password_strong
+
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
@@ -34,13 +34,6 @@ def create_user(email, password, email_verified=False):
         session.rollback()
         return "Error: The email is already registered."
 
-def create_user_with_email_verification(email, password):
-    # Verificar el correo electrónico
-    is_valid, message = verify_email(email)
-    if not is_valid:
-        return message
-
-    return create_user(email, password, email_verified=True)
 
 def login(email, password):
     user = session.query(User).filter_by(email=email).first()
@@ -111,12 +104,29 @@ def list_favorite_passwords(user_id):
     return passwords
 
 def list_passwords_by_category(user_id, category_name):
-    category = session.query(Category).filter_by(name=category_name).first()
+    category = session.query(Category).filter_by(name=category_name, user_id=user_id).first()
     if category:
         passwords = session.query(Password).filter_by(user_id=user_id, category_id=category.id).all()
     else:
         passwords = []
     return passwords
+
+def create_category(name, user_id):
+    if user_id is None:
+        return "Error: user_id cannot be None."
+    new_category = Category(name=name, user_id=user_id)
+    try:
+        session.add(new_category)
+        session.commit()
+        return "Category created successfully."
+    except IntegrityError as e:
+        session.rollback()
+        return f"Error: {str(e)}"
+
+
+def list_categories(user_id):
+    categories = session.query(Category).filter_by(user_id=user_id).all()
+    return categories
 
 def delete_account(user_id, password):
     user = session.query(User).filter_by(id=user_id).first()
@@ -124,9 +134,10 @@ def delete_account(user_id, password):
         decrypted_password = fernet.decrypt(user.password.encode()).decode()
         if decrypted_password == password:
             session.query(Password).filter_by(user_id=user_id).delete()
+            session.query(Category).filter_by(user_id=user_id).delete()
             session.delete(user)
             session.commit()
-            return "Account and all associated passwords deleted successfully."
+            return "Account and all associated passwords and categories deleted successfully."
         else:
             return "Incorrect password."
     return "User not found."
