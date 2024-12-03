@@ -16,7 +16,7 @@
 ### 2. Correr el archivo main.py
 python main.py
 
-### 3gi. Correr las pruebas
+### 3. Correr las pruebas
 python -m unittest discover -s tests
 
 ### En caso de que te falte alguna libreria 
